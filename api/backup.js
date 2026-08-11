@@ -14,10 +14,15 @@ const SECOES = {
   firewallMangle: 'ip/firewall/mangle',
   firewallRaw: 'ip/firewall/raw',
   firewallListas: 'ip/firewall/address-list',
+  firewallConexoes: 'ip/firewall/connection',
+  firewallRastreamento: 'ip/firewall/connection/tracking',
+  firewallCamada7: 'ip/firewall/layer7-protocol',
   firewallServicos: 'ip/firewall/service-port',
   firewallIpv6Filtro: 'ipv6/firewall/filter',
+  firewallIpv6Nat: 'ipv6/firewall/nat',
   firewallIpv6Raw: 'ipv6/firewall/raw',
   firewallIpv6Listas: 'ipv6/firewall/address-list',
+  firewallIpv6Conexoes: 'ipv6/firewall/connection',
 };
 
 export default async function handler(req, res) {
