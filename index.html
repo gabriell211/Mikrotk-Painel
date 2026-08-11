@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Painel administrativo seguro para MikroTik RouterOS.">
+  <title>MikroTik Painel</title>
+  <link rel="stylesheet" href="/src/css/app.css">
+</head>
+<body>
+  <div id="carregamento-inicial" class="tela-central">
+    <div class="loader" aria-hidden="true"></div>
+    <p>Carregando painel...</p>
+  </div>
+
+  <main id="tela-login" class="tela-login oculto">
+    <section class="cartao-login" aria-labelledby="titulo-login">
+      <div class="marca-login">
+        <span class="marca-icone">M</span>
+        <div>
+          <strong>MikroTik Painel</strong>
+          <small>Administração RouterOS</small>
+        </div>
+      </div>
+
+      <div>
+        <h1 id="titulo-login">Acesso administrativo</h1>
+        <p>Entre com as credenciais configuradas para o painel.</p>
+      </div>
+
+      <form id="form-login" class="formulario-login" autocomplete="on">
+        <label>
+          Usuário
+          <input id="login-usuario" name="usuario" type="text" autocomplete="username" required maxlength="80">
+        </label>
+        <label>
+          Senha
+          <input id="login-senha" name="senha" type="password" autocomplete="current-password" required maxlength="256">
+        </label>
+        <button id="botao-login" class="botao primario" type="submit">Entrar</button>
+        <p id="erro-login" class="mensagem-erro" role="alert"></p>
+      </form>
+    </section>
+  </main>
+
+  <div id="painel" class="app-shell oculto">
+    <aside class="barra-lateral">
+      <div class="marca">
+        <span class="marca-icone">M</span>
+        <div>
+          <strong>MikroTik</strong>
+          <small>Painel RouterOS</small>
+        </div>
+      </div>
+
+      <nav class="menu" aria-label="Navegação principal">
+        <button class="item-menu ativo" data-secao="visao-geral" type="button"><span>◫</span> Visão geral</button>
+        <button class="item-menu" data-secao="dispositivos" type="button"><span>◉</span> Dispositivos / DHCP</button>
+        <button class="item-menu" data-secao="arp" type="button"><span>⌁</span> Tabela ARP</button>
+        <button class="item-menu" data-secao="interfaces" type="button"><span>↔</span> Interfaces</button>
+        <button class="item-menu" data-secao="vlans" type="button"><span>◇</span> VLANs</button>
+        <button class="item-menu" data-secao="enderecos-ip" type="button"><span>#</span> Endereços IP</button>
+
+        <div class="titulo-grupo">Firewall IPv4</div>
+        <button class="item-menu" data-secao="firewall-filtro" type="button"><span>⌾</span> Regras de filtro</button>
+        <button class="item-menu" data-secao="firewall-nat" type="button"><span>⇄</span> NAT</button>
+        <button class="item-menu" data-secao="firewall-mangle" type="button"><span>⌘</span> Mangle</button>
+        <button class="item-menu" data-secao="firewall-raw" type="button"><span>⚡</span> RAW</button>
+        <button class="item-menu" data-secao="listas-endereco" type="button"><span>☷</span> Listas de endereços</button>
+        <button class="item-menu" data-secao="conexoes" type="button"><span>⇌</span> Conexões ativas</button>
+        <button class="item-menu" data-secao="service-port" type="button"><span>⚙</span> Service Ports</button>
+
+        <div class="titulo-grupo">Firewall IPv6</div>
+        <button class="item-menu" data-secao="ipv6-filtro" type="button"><span>⌾</span> Filtro IPv6</button>
+        <button class="item-menu" data-secao="ipv6-raw" type="button"><span>⚡</span> RAW IPv6</button>
+        <button class="item-menu" data-secao="ipv6-listas" type="button"><span>☷</span> Listas IPv6</button>
+      </nav>
+
+      <div class="rodape-lateral">
+        <div class="status-conexao">
+          <span id="ponto-status" class="ponto-status"></span>
+          <div>
+            <strong id="texto-status">Verificando...</strong>
+            <small id="identidade-router">RouterOS</small>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="conteudo">
+      <header class="topo">
+        <div>
+          <h1 id="titulo-secao">Visão geral</h1>
+          <p id="descricao-secao">Estado atual do roteador e da rede.</p>
+        </div>
+        <div class="acoes-topo">
+          <button id="botao-backup" class="botao secundario" type="button">Baixar backup JSON</button>
+          <button id="botao-sair" class="botao fantasma" type="button">Sair</button>
+        </div>
+      </header>
+
+      <div id="alerta-global" class="alerta oculto" role="alert"></div>
+
+      <section id="metricas" class="grade-metricas" aria-label="Métricas"></section>
+
+      <section id="area-recurso" class="area-recurso oculto">
+        <div class="barra-ferramentas">
+          <div class="busca-wrap">
+            <label class="sr-only" for="campo-busca">Pesquisar</label>
+            <input id="campo-busca" type="search" placeholder="Pesquisar nesta tabela...">
+          </div>
+          <div class="acoes-ferramentas">
+            <button id="botao-atualizar" class="botao secundario" type="button">Atualizar</button>
+            <button id="botao-adicionar" class="botao primario" type="button">Adicionar</button>
+          </div>
+        </div>
+
+        <div class="tabela-wrap">
+          <table class="tabela-dados">
+            <thead id="cabecalho-tabela"></thead>
+            <tbody id="corpo-tabela"></tbody>
+          </table>
+          <div id="estado-vazio" class="estado-vazio oculto">Nenhum registro encontrado.</div>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <dialog id="modal-editor" class="modal">
+    <form id="form-editor" method="dialog" class="modal-conteudo">
+      <header class="modal-topo">
+        <div>
+          <h2 id="titulo-editor">Editar registro</h2>
+          <p id="subtitulo-editor">Altere somente o necessário.</p>
+        </div>
+        <button id="fechar-editor" class="botao-icone" type="button" aria-label="Fechar">×</button>
+      </header>
+
+      <div id="campos-editor" class="grade-formulario"></div>
+
+      <label class="campo-avancado">
+        Parâmetros avançados (JSON)
+        <textarea id="json-avancado" rows="8" spellcheck="false" placeholder='{"connection-state":"established,related"}'></textarea>
+        <small>Use para propriedades RouterOS que não possuem campo próprio. Os valores do JSON substituem campos com o mesmo nome.</small>
+      </label>
+
+      <footer class="modal-acoes">
+        <button id="cancelar-editor" class="botao secundario" type="button">Cancelar</button>
+        <button id="salvar-editor" class="botao primario" type="submit">Salvar alterações</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="modal-confirmacao" class="modal modal-pequeno">
+    <section class="modal-conteudo">
+      <header class="modal-topo">
+        <div>
+          <h2 id="titulo-confirmacao">Confirmar alteração</h2>
+          <p id="texto-confirmacao">Esta ação altera a configuração do roteador.</p>
+        </div>
+      </header>
+      <div id="aviso-confirmacao" class="aviso-risco oculto"></div>
+      <footer class="modal-acoes">
+        <button id="cancelar-confirmacao" class="botao secundario" type="button">Cancelar</button>
+        <button id="aceitar-confirmacao" class="botao perigo" type="button">Confirmar</button>
+      </footer>
+    </section>
+  </dialog>
+
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module" src="/src/js/app.js"></script>
+</body>
+</html>
