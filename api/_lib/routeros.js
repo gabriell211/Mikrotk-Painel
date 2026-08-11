@@ -21,6 +21,7 @@ const RECURSOS_PERMITIDOS = [
 const COMANDOS_POST_PERMITIDOS = [
   /^ip\/firewall\/(filter|nat|mangle|raw)\/move$/,
   /^ipv6\/firewall\/(filter|raw)\/move$/,
+  /^ip\/dhcp-server\/lease\/make-static$/,
 ];
 
 const METODOS_MUTAVEIS = new Set(['PUT', 'PATCH', 'DELETE', 'POST']);
@@ -93,7 +94,7 @@ export function validarAcessoRecurso(caminhoRecebido, metodoRecebido) {
   if (metodo === 'POST' && !COMANDOS_POST_PERMITIDOS.some((regex) => regex.test(caminho))) {
     return {
       permitido: false,
-      motivo: 'POST é restrito a comandos de ordenação explicitamente permitidos.',
+      motivo: 'POST é restrito a comandos administrativos explicitamente permitidos.',
       caminho,
       metodo,
     };
