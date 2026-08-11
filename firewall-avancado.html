@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Administração avançada do firewall MikroTik RouterOS.">
+  <title>Firewall avançado | MikroTik Painel</title>
+  <link rel="stylesheet" href="/src/css/app.css">
+  <link rel="stylesheet" href="/src/css/avancado.css">
+</head>
+<body>
+  <main class="pagina-avancada">
+    <header class="topo avancado-topo">
+      <div>
+        <a class="voltar" href="/">← Voltar ao painel</a>
+        <h1>Firewall avançado</h1>
+        <p>Acesso controlado aos recursos avançados permitidos pelo backend.</p>
+      </div>
+      <span class="badge alerta">Alterações imediatas</span>
+    </header>
+
+    <div class="alerta">
+      Esta tela continua protegida pela allowlist do backend. Ela não libera <code>/rest/execute</code>, scripts ou comandos RouterOS arbitrários.
+    </div>
+
+    <section class="grade-avancada">
+      <article class="area-recurso bloco-avancado">
+        <h2>Recurso</h2>
+
+        <label>
+          Área do RouterOS
+          <select id="recurso-avancado">
+            <option value="ip/firewall/filter">IPv4 — Filter</option>
+            <option value="ip/firewall/nat">IPv4 — NAT</option>
+            <option value="ip/firewall/mangle">IPv4 — Mangle</option>
+            <option value="ip/firewall/raw">IPv4 — RAW</option>
+            <option value="ip/firewall/address-list">IPv4 — Address List</option>
+            <option value="ip/firewall/connection">IPv4 — Conexões</option>
+            <option value="ip/firewall/connection/tracking">IPv4 — Connection Tracking</option>
+            <option value="ip/firewall/layer7-protocol">IPv4 — Layer7 Protocol</option>
+            <option value="ip/firewall/service-port">IPv4 — Service Ports</option>
+            <option value="ipv6/firewall/filter">IPv6 — Filter</option>
+            <option value="ipv6/firewall/nat">IPv6 — NAT</option>
+            <option value="ipv6/firewall/raw">IPv6 — RAW</option>
+            <option value="ipv6/firewall/address-list">IPv6 — Address List</option>
+            <option value="ipv6/firewall/connection">IPv6 — Conexões</option>
+          </select>
+        </label>
+
+        <label>
+          Operação
+          <select id="metodo-avancado">
+            <option value="GET">Ler (GET)</option>
+            <option value="PUT">Criar (PUT)</option>
+            <option value="PATCH">Alterar (PATCH)</option>
+            <option value="DELETE">Excluir (DELETE)</option>
+          </select>
+        </label>
+
+        <label>
+          ID do registro
+          <input id="id-registro" type="text" placeholder="Ex.: *A — obrigatório para PATCH/DELETE">
+        </label>
+
+        <label>
+          Corpo JSON
+          <textarea id="corpo-json" rows="14" spellcheck="false" placeholder='{
+  "chain": "input",
+  "action": "accept",
+  "protocol": "tcp",
+  "dst-port": "8291"
+}'></textarea>
+        </label>
+
+        <div class="acoes-ferramentas">
+          <button id="executar-avancado" class="botao primario" type="button">Executar</button>
+          <button id="limpar-avancado" class="botao secundario" type="button">Limpar</button>
+        </div>
+      </article>
+
+      <article class="area-recurso bloco-avancado resultado-avancado">
+        <div class="resultado-topo">
+          <h2>Resposta</h2>
+          <button id="copiar-resposta" class="botao secundario pequeno" type="button">Selecionar resposta</button>
+        </div>
+        <pre id="resposta-avancada" tabindex="0">Selecione um recurso e clique em Executar.</pre>
+      </article>
+    </section>
+  </main>
+
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module" src="/src/js/firewall-avancado.js"></script>
+</body>
+</html>
