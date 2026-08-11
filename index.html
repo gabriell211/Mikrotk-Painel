@@ -68,7 +68,7 @@
         <button class="item-menu" data-secao="firewall-raw" type="button"><span>⚡</span> RAW</button>
         <button class="item-menu" data-secao="listas-endereco" type="button"><span>☷</span> Listas de endereços</button>
         <button class="item-menu" data-secao="conexoes" type="button"><span>⇌</span> Conexões ativas</button>
-        <button class="item-menu" data-secao="service-port" type="button"><span>⚙</span> Service Ports</button>
+        <button class="item-menu" data-secao="service-port" type="button"><span>⚙</span> Portas de serviço</button>
 
         <div class="titulo-grupo">Firewall IPv6</div>
         <button class="item-menu" data-secao="ipv6-filtro" type="button"><span>⌾</span> Filtro IPv6</button>
@@ -94,6 +94,9 @@
           <p id="descricao-secao">Estado atual do roteador e da rede.</p>
         </div>
         <div class="acoes-topo">
+          <form action="/firewall-avancado.html" method="get">
+            <button class="botao secundario" type="submit">Firewall avançado</button>
+          </form>
           <button id="botao-backup" class="botao secundario" type="button">Baixar backup JSON</button>
           <button id="botao-sair" class="botao fantasma" type="button">Sair</button>
         </div>
