@@ -52,6 +52,71 @@ function exigeConfirmacaoRisco(caminho, metodo) {
   return caminho.startsWith('ip/firewall/') || caminho.startsWith('ipv6/firewall/');
 }
 
+function validarMac(mac) {
+  return /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(String(mac));
+}
+
+function validarIPv4(ip) {
+  const partes = String(ip).split('/')[0].split('.');
+  return partes.length === 4 && partes.every((parte) => /^\d{1,3}$/.test(parte) && Number(parte) <= 255);
+}
+
+async function validarAlteracaoLease(caminho, metodo, corpo) {
+  if (!['PUT', 'PATCH'].includes(metodo)) return;
+  if (!(caminho === 'ip/dhcp-server/lease' || /^ip\/dhcp-server\/lease\/\*[A-Za-z0-9]+$/.test(caminho))) return;
+  if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) {
+    const erro = new Error('Dados do lease DHCP são obrigatórios.');
+    erro.status = 422;
+    throw erro;
+  }
+
+  if (corpo['mac-address'] && !validarMac(corpo['mac-address'])) {
+    const erro = new Error('Endereço MAC inválido. Use AA:BB:CC:DD:EE:FF.');
+    erro.status = 422;
+    throw erro;
+  }
+
+  if (corpo.address && !validarIPv4(corpo.address)) {
+    const erro = new Error('Endereço IPv4 inválido para o lease DHCP.');
+    erro.status = 422;
+    throw erro;
+  }
+
+  if (!corpo.address && !corpo['mac-address']) return;
+
+  const leases = await requisitarRouterOS('ip/dhcp-server/lease', { metodo: 'GET' });
+  const idAtual = caminho.startsWith('ip/dhcp-server/lease/*') ? caminho.split('/').at(-1) : null;
+  const mac = corpo['mac-address']?.toUpperCase();
+  const ip = corpo.address;
+
+  const conflito = (Array.isArray(leases) ? leases : []).find((lease) => {
+    if (idAtual && lease['.id'] === idAtual) return false;
+    const mesmoMac = mac && String(lease['mac-address'] ?? '').toUpperCase() === mac;
+    const mesmoIp = ip && lease.address === ip;
+    return mesmoMac || mesmoIp;
+  });
+
+  if (conflito) {
+    const erro = new Error(
+      conflito.address === ip
+        ? `O IP ${ip} já está associado a outro lease.`
+        : `O MAC ${corpo['mac-address']} já está associado a outro lease.`,
+    );
+    erro.status = 409;
+    throw erro;
+  }
+}
+
+function validarComandoLease(caminho, metodo, corpo) {
+  if (caminho !== 'ip/dhcp-server/lease/make-static' || metodo !== 'POST') return;
+
+  if (!corpo?.numbers || !/^\*[A-Za-z0-9]+$/.test(String(corpo.numbers))) {
+    const erro = new Error('Identificador do lease inválido para conversão em estático.');
+    erro.status = 422;
+    throw erro;
+  }
+}
+
 export default async function handler(req, res) {
   semCache(res);
 
@@ -82,6 +147,9 @@ export default async function handler(req, res) {
 
   try {
     const corpo = lerCorpo(req);
+
+    await validarAlteracaoLease(acesso.caminho, metodo, corpo);
+    validarComandoLease(acesso.caminho, metodo, corpo);
 
     if (ehMutacao(metodo) && (acesso.caminho.startsWith('ip/firewall/') || acesso.caminho.startsWith('ipv6/firewall/'))) {
       await criarExportSeguranca();
