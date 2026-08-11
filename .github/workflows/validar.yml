@@ -1,0 +1,27 @@
+name: Validar painel
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    name: Sintaxe e testes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validar projeto
+        run: npm run validate
