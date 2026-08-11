@@ -14,13 +14,13 @@
       <div>
         <a class="voltar" href="/">← Voltar ao painel</a>
         <h1>Firewall avançado</h1>
-        <p>Acesso controlado aos recursos avançados permitidos pelo backend.</p>
+        <p>Acesso controlado aos recursos avançados permitidos pelo servidor.</p>
       </div>
       <span class="badge alerta">Alterações imediatas</span>
     </header>
 
     <div class="alerta">
-      Esta tela continua protegida pela allowlist do backend. Ela não libera <code>/rest/execute</code>, scripts ou comandos RouterOS arbitrários.
+      Esta tela continua protegida pela lista de recursos permitidos no servidor. Ela não libera <code>/rest/execute</code>, scripts ou comandos RouterOS arbitrários.
     </div>
 
     <section class="grade-avancada">
@@ -30,19 +30,19 @@
         <label>
           Área do RouterOS
           <select id="recurso-avancado">
-            <option value="ip/firewall/filter">IPv4 — Filter</option>
+            <option value="ip/firewall/filter">IPv4 — Regras de filtro</option>
             <option value="ip/firewall/nat">IPv4 — NAT</option>
             <option value="ip/firewall/mangle">IPv4 — Mangle</option>
             <option value="ip/firewall/raw">IPv4 — RAW</option>
-            <option value="ip/firewall/address-list">IPv4 — Address List</option>
+            <option value="ip/firewall/address-list">IPv4 — Listas de endereços</option>
             <option value="ip/firewall/connection">IPv4 — Conexões</option>
-            <option value="ip/firewall/connection/tracking">IPv4 — Connection Tracking</option>
-            <option value="ip/firewall/layer7-protocol">IPv4 — Layer7 Protocol</option>
-            <option value="ip/firewall/service-port">IPv4 — Service Ports</option>
-            <option value="ipv6/firewall/filter">IPv6 — Filter</option>
+            <option value="ip/firewall/connection/tracking">IPv4 — Rastreamento de conexões</option>
+            <option value="ip/firewall/layer7-protocol">IPv4 — Protocolos de camada 7</option>
+            <option value="ip/firewall/service-port">IPv4 — Portas de serviço</option>
+            <option value="ipv6/firewall/filter">IPv6 — Regras de filtro</option>
             <option value="ipv6/firewall/nat">IPv6 — NAT</option>
             <option value="ipv6/firewall/raw">IPv6 — RAW</option>
-            <option value="ipv6/firewall/address-list">IPv6 — Address List</option>
+            <option value="ipv6/firewall/address-list">IPv6 — Listas de endereços</option>
             <option value="ipv6/firewall/connection">IPv6 — Conexões</option>
           </select>
         </label>
