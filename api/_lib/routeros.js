@@ -12,15 +12,18 @@ const RECURSOS_PERMITIDOS = [
   'ip/firewall/raw',
   'ip/firewall/address-list',
   'ip/firewall/connection',
+  'ip/firewall/layer7-protocol',
   'ip/firewall/service-port',
   'ipv6/firewall/filter',
+  'ipv6/firewall/nat',
   'ipv6/firewall/raw',
   'ipv6/firewall/address-list',
+  'ipv6/firewall/connection',
 ];
 
 const COMANDOS_POST_PERMITIDOS = [
   /^ip\/firewall\/(filter|nat|mangle|raw)\/move$/,
-  /^ipv6\/firewall\/(filter|raw)\/move$/,
+  /^ipv6\/firewall\/(filter|nat|raw)\/move$/,
   /^ip\/dhcp-server\/lease\/make-static$/,
 ];
 
