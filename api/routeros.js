@@ -12,7 +12,7 @@ import {
 
 function lerCorpo(req) {
   if (req.body === undefined || req.body === null || req.body === '') return undefined;
-  if (req.body && typeof req.body === 'object') return req.body;
+  if (req.body && typeof req.body === 'object') return { ...req.body };
 
   if (typeof req.body === 'string') {
     if (Buffer.byteLength(req.body, 'utf8') > 65_536) {
@@ -117,6 +117,32 @@ function validarComandoLease(caminho, metodo, corpo) {
   }
 }
 
+function normalizarComandoMove(caminho, metodo, corpo) {
+  if (metodo !== 'POST' || !/^(ip|ipv6)\/firewall\/(filter|nat|mangle|raw)\/move$/.test(caminho)) {
+    return corpo;
+  }
+
+  if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) {
+    const erro = new Error('Dados obrigatórios para reordenar a regra não foram informados.');
+    erro.status = 422;
+    throw erro;
+  }
+
+  const id = corpo['.id'] ?? corpo.numbers;
+  const destino = corpo.destination;
+
+  if (!/^\*[A-Za-z0-9]+$/.test(String(id ?? '')) || !/^\*[A-Za-z0-9]+$/.test(String(destino ?? ''))) {
+    const erro = new Error('Identificadores inválidos para reordenar a regra de firewall.');
+    erro.status = 422;
+    throw erro;
+  }
+
+  return {
+    '.id': String(id),
+    destination: String(destino),
+  };
+}
+
 export default async function handler(req, res) {
   semCache(res);
 
@@ -146,10 +172,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const corpo = lerCorpo(req);
+    let corpo = lerCorpo(req);
 
     await validarAlteracaoLease(acesso.caminho, metodo, corpo);
     validarComandoLease(acesso.caminho, metodo, corpo);
+    corpo = normalizarComandoMove(acesso.caminho, metodo, corpo);
 
     if (ehMutacao(metodo) && (acesso.caminho.startsWith('ip/firewall/') || acesso.caminho.startsWith('ipv6/firewall/'))) {
       await criarExportSeguranca();
