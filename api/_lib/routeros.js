@@ -33,9 +33,15 @@ function configuracao() {
   const url = process.env.MIKROTIK_URL?.trim();
   const usuario = process.env.MIKROTIK_USUARIO?.trim();
   const senha = process.env.MIKROTIK_SENHA ?? '';
+  const cloudflareClientId = process.env.CLOUDFLARE_ACCESS_CLIENT_ID?.trim();
+  const cloudflareClientSecret = process.env.CLOUDFLARE_ACCESS_CLIENT_SECRET?.trim();
 
   if (!url || !usuario) {
     throw new Error('MIKROTIK_URL e MIKROTIK_USUARIO precisam estar configurados.');
+  }
+
+  if (Boolean(cloudflareClientId) !== Boolean(cloudflareClientSecret)) {
+    throw new Error('CLOUDFLARE_ACCESS_CLIENT_ID e CLOUDFLARE_ACCESS_CLIENT_SECRET devem ser configurados juntos.');
   }
 
   const base = new URL(url);
@@ -51,6 +57,8 @@ function configuracao() {
     base,
     usuario,
     senha,
+    cloudflareClientId,
+    cloudflareClientSecret,
     timeoutMs: Math.min(Math.max(Number(process.env.MIKROTIK_TIMEOUT_MS ?? 10000), 1000), 30000),
   };
 }
@@ -111,7 +119,14 @@ export function validarAcessoRecurso(caminhoRecebido, metodoRecebido) {
 }
 
 async function executar(caminho, { metodo = 'GET', corpo, parametros } = {}) {
-  const { base, usuario, senha, timeoutMs } = configuracao();
+  const {
+    base,
+    usuario,
+    senha,
+    cloudflareClientId,
+    cloudflareClientSecret,
+    timeoutMs,
+  } = configuracao();
   const url = new URL(`${base.toString().replace(/\/$/, '')}/rest/${caminho}`);
 
   if (parametros && typeof parametros === 'object') {
@@ -126,13 +141,20 @@ async function executar(caminho, { metodo = 'GET', corpo, parametros } = {}) {
   const timer = setTimeout(() => controlador.abort(), timeoutMs);
 
   try {
+    const headers = {
+      Accept: 'application/json',
+      Authorization: `Basic ${Buffer.from(`${usuario}:${senha}`, 'utf8').toString('base64')}`,
+      ...(corpo !== undefined ? { 'Content-Type': 'application/json' } : {}),
+    };
+
+    if (cloudflareClientId && cloudflareClientSecret) {
+      headers['CF-Access-Client-Id'] = cloudflareClientId;
+      headers['CF-Access-Client-Secret'] = cloudflareClientSecret;
+    }
+
     const resposta = await fetch(url, {
       method: metodo,
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Basic ${Buffer.from(`${usuario}:${senha}`, 'utf8').toString('base64')}`,
-        ...(corpo !== undefined ? { 'Content-Type': 'application/json' } : {}),
-      },
+      headers,
       body: corpo !== undefined ? JSON.stringify(corpo) : undefined,
       signal: controlador.signal,
       redirect: 'error',
