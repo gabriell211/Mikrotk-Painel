@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "npx vercel dev",
     "start": "npx vercel dev",
-    "check": "node --check src/js/app.js && node --check api/login.js && node --check api/logout.js && node --check api/session.js && node --check api/routeros.js && node --check api/backup.js && node --check api/_lib/seguranca.js && node --check api/_lib/routeros.js",
+    "check": "node --check src/js/app.js && node --check src/js/firewall-avancado.js && node --check api/login.js && node --check api/logout.js && node --check api/session.js && node --check api/routeros.js && node --check api/backup.js && node --check api/_lib/seguranca.js && node --check api/_lib/routeros.js",
     "test": "node --test tests/*.test.js",
     "validate": "npm run check && npm test"
   },
