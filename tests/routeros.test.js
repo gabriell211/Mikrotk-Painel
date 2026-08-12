@@ -55,6 +55,17 @@ test('bloqueia mutação direta na raiz SMTP', () => {
   assert.equal(resultado.permitido, false);
 });
 
+test('permite leitura do log para observabilidade SMTP', () => {
+  const resultado = validarAcessoRecurso('log', 'GET');
+  assert.equal(resultado.permitido, true);
+});
+
+test('bloqueia qualquer mutação no log', () => {
+  assert.equal(validarAcessoRecurso('log', 'DELETE').permitido, false);
+  assert.equal(validarAcessoRecurso('log', 'POST').permitido, false);
+  assert.equal(validarAcessoRecurso('log/*1', 'GET').permitido, false);
+});
+
 test('bloqueia POST arbitrário mesmo dentro de um recurso permitido', () => {
   const resultado = validarAcessoRecurso('ip/firewall/filter/reset-counters-all', 'POST');
   assert.equal(resultado.permitido, false);

@@ -23,6 +23,7 @@ const CAMPOS_SMTP_CONFIG = new Set([
 
 const CAMPOS_SMTP_ENVIO = new Set(['to', 'subject', 'body']);
 const SMTP_PROPLIST_SEGURO = 'address,server,port,from,user,tls,certificate-verification,vrf';
+const LOG_PROPLIST_SEGURO = 'time,topics,message';
 
 function erroValidacao(mensagem) {
   const erro = new Error(mensagem);
@@ -75,6 +76,14 @@ function parametrosLeituraSeguros(caminho, metodo, req) {
       '.proplist': SMTP_PROPLIST_SEGURO,
     };
   }
+
+  if (metodo === 'GET' && caminho === 'log') {
+    return {
+      ...(parametros ?? {}),
+      '.proplist': LOG_PROPLIST_SEGURO,
+    };
+  }
+
   return parametros;
 }
 
