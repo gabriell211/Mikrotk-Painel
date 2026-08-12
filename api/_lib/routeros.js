@@ -104,6 +104,24 @@ export function validarAcessoRecurso(caminhoRecebido, metodoRecebido) {
     return { permitido: false, motivo: 'Método HTTP não permitido.', caminho, metodo };
   }
 
+  if (caminho === 'tool/e-mail' && metodo !== 'GET') {
+    return {
+      permitido: false,
+      motivo: 'A configuração SMTP só pode ser consultada pela raiz do recurso.',
+      caminho,
+      metodo,
+    };
+  }
+
+  if (caminho.startsWith('tool/e-mail/') && !(metodo === 'POST' && /^tool\/e-mail\/(set|send)$/.test(caminho))) {
+    return {
+      permitido: false,
+      motivo: 'Operação SMTP não permitida pelo painel.',
+      caminho,
+      metodo,
+    };
+  }
+
   if (metodo === 'POST' && !COMANDOS_POST_PERMITIDOS.some((regex) => regex.test(caminho))) {
     return {
       permitido: false,
