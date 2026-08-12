@@ -20,6 +20,7 @@ const RECURSOS_PERMITIDOS = [
   'ipv6/firewall/address-list',
   'ipv6/firewall/connection',
   'tool/e-mail',
+  'log',
 ];
 
 const COMANDOS_POST_PERMITIDOS = [
@@ -102,6 +103,24 @@ export function validarAcessoRecurso(caminhoRecebido, metodoRecebido) {
 
   if (!['GET', 'PUT', 'PATCH', 'DELETE', 'POST'].includes(metodo)) {
     return { permitido: false, motivo: 'Método HTTP não permitido.', caminho, metodo };
+  }
+
+  if (caminho === 'log' && metodo !== 'GET') {
+    return {
+      permitido: false,
+      motivo: 'Logs do RouterOS são somente leitura no painel.',
+      caminho,
+      metodo,
+    };
+  }
+
+  if (caminho.startsWith('log/')) {
+    return {
+      permitido: false,
+      motivo: 'Somente a leitura da raiz de logs é permitida.',
+      caminho,
+      metodo,
+    };
   }
 
   if (caminho === 'tool/e-mail' && metodo !== 'GET') {
