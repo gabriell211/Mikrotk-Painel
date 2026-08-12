@@ -10,6 +10,26 @@ import {
   validarOrigemMutacao,
 } from './_lib/seguranca.js';
 
+const CAMPOS_SMTP_CONFIG = new Set([
+  'address',
+  'port',
+  'from',
+  'user',
+  'password',
+  'tls',
+  'certificate-verification',
+  'vrf',
+]);
+
+const CAMPOS_SMTP_ENVIO = new Set(['to', 'subject', 'body']);
+const SMTP_PROPLIST_SEGURO = 'address,server,port,from,user,tls,certificate-verification,vrf';
+
+function erroValidacao(mensagem) {
+  const erro = new Error(mensagem);
+  erro.status = 422;
+  return erro;
+}
+
 function lerCorpo(req) {
   if (req.body === undefined || req.body === null || req.body === '') return undefined;
   if (req.body && typeof req.body === 'object') return { ...req.body };
@@ -47,6 +67,17 @@ function lerParametros(req) {
   }
 }
 
+function parametrosLeituraSeguros(caminho, metodo, req) {
+  const parametros = lerParametros(req);
+  if (metodo === 'GET' && caminho === 'tool/e-mail') {
+    return {
+      ...(parametros ?? {}),
+      '.proplist': SMTP_PROPLIST_SEGURO,
+    };
+  }
+  return parametros;
+}
+
 function exigeConfirmacaoRisco(caminho, metodo) {
   if (!ehMutacao(metodo)) return false;
   return caminho.startsWith('ip/firewall/') || caminho.startsWith('ipv6/firewall/');
@@ -59,6 +90,89 @@ function validarMac(mac) {
 function validarIPv4(ip) {
   const partes = String(ip).split('/')[0].split('.');
   return partes.length === 4 && partes.every((parte) => /^\d{1,3}$/.test(parte) && Number(parte) <= 255);
+}
+
+function validarTexto(valor, { campo, maximo, permitirVazio = true, trim = true }) {
+  if (typeof valor !== 'string' && typeof valor !== 'number') {
+    throw erroValidacao(`${campo} precisa ser texto.`);
+  }
+
+  const textoOriginal = String(valor);
+  const texto = trim ? textoOriginal.trim() : textoOriginal;
+  if (!permitirVazio && !texto) throw erroValidacao(`${campo} é obrigatório.`);
+  if (texto.length > maximo) throw erroValidacao(`${campo} excede o tamanho máximo de ${maximo} caracteres.`);
+  if (/\0/.test(texto)) throw erroValidacao(`${campo} contém caracteres inválidos.`);
+  return texto;
+}
+
+function validarDestinatarioEmail(valor) {
+  const email = validarTexto(valor, { campo: 'Destinatário', maximo: 320, permitirVazio: false });
+  if (/\r|\n/.test(email) || !/^[^\s@]+@[^\s@]+$/.test(email)) {
+    throw erroValidacao('Destinatário de e-mail inválido.');
+  }
+  return email;
+}
+
+function garantirCamposPermitidos(corpo, permitidos, contexto) {
+  if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) {
+    throw erroValidacao(`Dados de ${contexto} são obrigatórios.`);
+  }
+
+  const extras = Object.keys(corpo).filter((chave) => !permitidos.has(chave));
+  if (extras.length) {
+    throw erroValidacao(`Campo não permitido em ${contexto}: ${extras[0]}.`);
+  }
+}
+
+function normalizarComandoSmtp(caminho, metodo, corpo) {
+  if (metodo !== 'POST' || !caminho.startsWith('tool/e-mail/')) return corpo;
+
+  if (caminho === 'tool/e-mail/set') {
+    garantirCamposPermitidos(corpo, CAMPOS_SMTP_CONFIG, 'configuração SMTP');
+
+    const normalizado = {};
+    if ('address' in corpo) normalizado.address = validarTexto(corpo.address, { campo: 'Servidor SMTP', maximo: 255, permitirVazio: false });
+    if ('from' in corpo) normalizado.from = validarTexto(corpo.from, { campo: 'Remetente', maximo: 320 });
+    if ('user' in corpo) normalizado.user = validarTexto(corpo.user, { campo: 'Usuário SMTP', maximo: 320 });
+    if ('password' in corpo) normalizado.password = validarTexto(corpo.password, { campo: 'Senha SMTP', maximo: 256, trim: false });
+    if ('vrf' in corpo) normalizado.vrf = validarTexto(corpo.vrf, { campo: 'VRF', maximo: 64, permitirVazio: false });
+
+    if ('port' in corpo) {
+      const porta = Number(corpo.port);
+      if (!Number.isInteger(porta) || porta < 1 || porta > 65535) {
+        throw erroValidacao('Porta SMTP precisa estar entre 1 e 65535.');
+      }
+      normalizado.port = String(porta);
+    }
+
+    if ('tls' in corpo) {
+      const tls = String(corpo.tls);
+      if (!['no', 'yes', 'starttls'].includes(tls)) throw erroValidacao('Modo TLS inválido.');
+      normalizado.tls = tls;
+    }
+
+    if ('certificate-verification' in corpo) {
+      const verificacao = String(corpo['certificate-verification']);
+      if (!['no', 'yes', 'yes-without-crl'].includes(verificacao)) {
+        throw erroValidacao('Modo de verificação de certificado inválido.');
+      }
+      normalizado['certificate-verification'] = verificacao;
+    }
+
+    if (!Object.keys(normalizado).length) throw erroValidacao('Nenhuma configuração SMTP foi informada.');
+    return normalizado;
+  }
+
+  if (caminho === 'tool/e-mail/send') {
+    garantirCamposPermitidos(corpo, CAMPOS_SMTP_ENVIO, 'teste SMTP');
+    return {
+      to: validarDestinatarioEmail(corpo.to),
+      subject: validarTexto(corpo.subject, { campo: 'Assunto', maximo: 160, permitirVazio: false }),
+      body: validarTexto(corpo.body ?? '', { campo: 'Mensagem', maximo: 4000, trim: false }),
+    };
+  }
+
+  return corpo;
 }
 
 async function validarAlteracaoLease(caminho, metodo, corpo) {
@@ -174,6 +288,7 @@ export default async function handler(req, res) {
   try {
     let corpo = lerCorpo(req);
 
+    corpo = normalizarComandoSmtp(acesso.caminho, metodo, corpo);
     await validarAlteracaoLease(acesso.caminho, metodo, corpo);
     validarComandoLease(acesso.caminho, metodo, corpo);
     corpo = normalizarComandoMove(acesso.caminho, metodo, corpo);
@@ -185,7 +300,7 @@ export default async function handler(req, res) {
     const dados = await requisitarRouterOS(acesso.caminho, {
       metodo,
       corpo,
-      parametros: metodo === 'GET' ? lerParametros(req) : undefined,
+      parametros: metodo === 'GET' ? parametrosLeituraSeguros(acesso.caminho, metodo, req) : undefined,
     });
 
     if (metodo === 'DELETE') {
