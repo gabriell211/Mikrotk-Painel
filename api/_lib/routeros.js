@@ -19,12 +19,14 @@ const RECURSOS_PERMITIDOS = [
   'ipv6/firewall/raw',
   'ipv6/firewall/address-list',
   'ipv6/firewall/connection',
+  'tool/e-mail',
 ];
 
 const COMANDOS_POST_PERMITIDOS = [
   /^ip\/firewall\/(filter|nat|mangle|raw)\/move$/,
   /^ipv6\/firewall\/(filter|nat|raw)\/move$/,
   /^ip\/dhcp-server\/lease\/make-static$/,
+  /^tool\/e-mail\/(set|send)$/,
 ];
 
 const METODOS_MUTAVEIS = new Set(['PUT', 'PATCH', 'DELETE', 'POST']);
