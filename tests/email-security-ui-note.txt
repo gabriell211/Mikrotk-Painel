@@ -1,0 +1,1 @@
+HYDRA email-security UI is validated by Node syntax checks. RouterOS integration behavior is covered by access-control tests; live firewall behavior requires a RouterOS test environment.
