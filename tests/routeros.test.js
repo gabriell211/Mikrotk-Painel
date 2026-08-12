@@ -25,6 +25,36 @@ test('permite converter lease DHCP em estático', () => {
   assert.equal(resultado.permitido, true);
 });
 
+test('permite consultar configuração SMTP', () => {
+  const resultado = validarAcessoRecurso('tool/e-mail', 'GET');
+  assert.equal(resultado.permitido, true);
+});
+
+test('permite salvar configuração SMTP pelo comando set', () => {
+  const resultado = validarAcessoRecurso('tool/e-mail/set', 'POST');
+  assert.equal(resultado.permitido, true);
+});
+
+test('permite envio SMTP pelo comando send', () => {
+  const resultado = validarAcessoRecurso('tool/e-mail/send', 'POST');
+  assert.equal(resultado.permitido, true);
+});
+
+test('bloqueia leitura direta do comando SMTP send', () => {
+  const resultado = validarAcessoRecurso('tool/e-mail/send', 'GET');
+  assert.equal(resultado.permitido, false);
+});
+
+test('bloqueia comando SMTP não explicitamente permitido', () => {
+  const resultado = validarAcessoRecurso('tool/e-mail/fetch', 'POST');
+  assert.equal(resultado.permitido, false);
+});
+
+test('bloqueia mutação direta na raiz SMTP', () => {
+  const resultado = validarAcessoRecurso('tool/e-mail', 'PUT');
+  assert.equal(resultado.permitido, false);
+});
+
 test('bloqueia POST arbitrário mesmo dentro de um recurso permitido', () => {
   const resultado = validarAcessoRecurso('ip/firewall/filter/reset-counters-all', 'POST');
   assert.equal(resultado.permitido, false);

@@ -3,29 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Painel administrativo seguro para MikroTik RouterOS.">
-  <title>MikroTik Painel</title>
+  <meta name="description" content="HYDRA Network Control — painel seguro para administração de MikroTik RouterOS.">
+  <meta name="theme-color" content="#080b10">
+  <title>HYDRA — Network Control</title>
+  <link rel="icon" type="image/svg+xml" href="/hydra-logo.svg">
   <link rel="stylesheet" href="/src/css/app.css">
+  <link rel="stylesheet" href="/src/css/hydra.css">
 </head>
 <body>
   <div id="carregamento-inicial" class="tela-central">
     <div class="loader" aria-hidden="true"></div>
-    <p>Carregando painel...</p>
+    <p>Carregando HYDRA...</p>
   </div>
 
   <main id="tela-login" class="tela-login oculto">
     <section class="cartao-login" aria-labelledby="titulo-login">
       <div class="marca-login">
-        <span class="marca-icone">M</span>
+        <img class="marca-logo" src="/hydra-logo.svg" alt="Logo HYDRA">
         <div>
-          <strong>MikroTik Painel</strong>
-          <small>Administração RouterOS</small>
+          <strong>HYDRA</strong>
+          <small>Network Control</small>
         </div>
       </div>
 
       <div>
         <h1 id="titulo-login">Acesso administrativo</h1>
-        <p>Entre com as credenciais configuradas para o painel.</p>
+        <p>Controle centralizado e seguro do seu ambiente RouterOS.</p>
       </div>
 
       <form id="form-login" class="formulario-login" autocomplete="on">
@@ -46,10 +49,10 @@
   <div id="painel" class="app-shell oculto">
     <aside class="barra-lateral">
       <div class="marca">
-        <span class="marca-icone">M</span>
+        <img class="marca-logo" src="/hydra-logo.svg" alt="" aria-hidden="true">
         <div>
-          <strong>MikroTik</strong>
-          <small>Painel RouterOS</small>
+          <strong>HYDRA</strong>
+          <small>Network Control</small>
         </div>
       </div>
 
@@ -74,6 +77,9 @@
         <button class="item-menu" data-secao="ipv6-filtro" type="button"><span>⌾</span> Filtro IPv6</button>
         <button class="item-menu" data-secao="ipv6-raw" type="button"><span>⚡</span> RAW IPv6</button>
         <button class="item-menu" data-secao="ipv6-listas" type="button"><span>☷</span> Listas IPv6</button>
+
+        <div class="titulo-grupo">Serviços</div>
+        <button class="item-menu" data-secao="smtp" type="button"><span>✉</span> SMTP / E-mail</button>
       </nav>
 
       <div class="rodape-lateral">
@@ -126,6 +132,122 @@
           <div id="estado-vazio" class="estado-vazio oculto">Nenhum registro encontrado.</div>
         </div>
       </section>
+
+      <section id="area-smtp" class="area-smtp oculto" aria-label="Administração SMTP">
+        <div class="smtp-hero">
+          <div>
+            <strong>SMTP do RouterOS</strong>
+            <p>Configure o cliente de e-mail do MikroTik, envie um teste e aplique proteções específicas para tráfego SMTP.</p>
+          </div>
+          <span id="smtp-status" class="smtp-status">Aguardando consulta</span>
+        </div>
+
+        <div class="smtp-grid">
+          <article class="smtp-card">
+            <header>
+              <h2>Servidor SMTP</h2>
+              <p>Configuração de <code>/tool e-mail</code>. A senha salva no roteador nunca é carregada para o navegador.</p>
+            </header>
+
+            <form id="form-smtp-config" class="smtp-form" autocomplete="off">
+              <div class="smtp-form-grid">
+                <label class="span-2">
+                  Servidor / endereço
+                  <input id="smtp-address" name="address" type="text" maxlength="255" placeholder="smtp.exemplo.com" required>
+                </label>
+                <label>
+                  Porta
+                  <input id="smtp-port" name="port" type="number" min="1" max="65535" value="587" required>
+                </label>
+                <label>
+                  TLS
+                  <select id="smtp-tls" name="tls">
+                    <option value="starttls">STARTTLS</option>
+                    <option value="yes">TLS obrigatório</option>
+                    <option value="no">Sem TLS</option>
+                  </select>
+                </label>
+                <label class="span-2">
+                  Remetente
+                  <input id="smtp-from" name="from" type="text" maxlength="320" placeholder="router@empresa.com">
+                </label>
+                <label>
+                  Usuário
+                  <input id="smtp-user" name="user" type="text" maxlength="320" autocomplete="off" placeholder="router@empresa.com">
+                </label>
+                <label>
+                  Nova senha
+                  <input id="smtp-password" name="password" type="password" maxlength="256" autocomplete="new-password" placeholder="Deixe vazio para não alterar">
+                </label>
+                <label>
+                  Verificação do certificado
+                  <select id="smtp-certificate" name="certificate-verification">
+                    <option value="yes">Sim</option>
+                    <option value="yes-without-crl">Sim, sem CRL</option>
+                    <option value="no">Não</option>
+                  </select>
+                </label>
+                <label>
+                  VRF
+                  <input id="smtp-vrf" name="vrf" type="text" maxlength="64" value="main" placeholder="main">
+                </label>
+              </div>
+              <small>A HYDRA consulta somente campos não sensíveis. O campo de senha é sempre descartado depois do envio.</small>
+              <div class="smtp-acoes">
+                <button id="smtp-recarregar" class="botao secundario" type="button">Recarregar</button>
+                <button id="smtp-salvar" class="botao primario" type="submit">Salvar SMTP</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="smtp-card">
+            <header>
+              <h2>Teste de envio</h2>
+              <p>Dispara uma mensagem pelo próprio MikroTik usando a configuração SMTP salva.</p>
+            </header>
+
+            <form id="form-smtp-teste" class="smtp-form">
+              <label>
+                Destinatário
+                <input id="smtp-test-to" name="to" type="email" maxlength="320" placeholder="ti@empresa.com" required>
+              </label>
+              <label>
+                Assunto
+                <input id="smtp-test-subject" name="subject" type="text" maxlength="160" value="HYDRA — teste SMTP" required>
+              </label>
+              <label>
+                Mensagem
+                <textarea id="smtp-test-body" name="body" rows="7" maxlength="4000">Teste de conectividade SMTP enviado pelo HYDRA Network Control.</textarea>
+              </label>
+              <div class="smtp-acoes">
+                <button id="smtp-testar" class="botao primario" type="submit">Enviar teste</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="smtp-card span-2">
+            <header>
+              <h2>Firewall SMTP</h2>
+              <p>Atalhos seguros para controlar SMTP de saída sem precisar montar as regras manualmente.</p>
+            </header>
+
+            <div class="smtp-firewall-grid">
+              <label>
+                IP ou rede do servidor SMTP autorizado
+                <input id="smtp-firewall-destino" type="text" maxlength="64" placeholder="203.0.113.10 ou 203.0.113.0/24">
+              </label>
+              <div class="smtp-acoes">
+                <button id="smtp-permitir-seguro" class="botao secundario" type="button">Permitir 465/587</button>
+                <button id="smtp-proteger-porta25" class="botao primario" type="button">Proteger porta 25</button>
+              </div>
+            </div>
+
+            <div class="smtp-nota-risco">
+              <strong>Como funciona:</strong> “Permitir 465/587” cria uma regra ACCEPT para o destino informado. “Proteger porta 25” permite primeiro o destino informado, quando preenchido, e depois cria DROP para demais conexões TCP/25. As regras são adicionadas ao final da chain <code>forward</code> e podem ser reordenadas na área de firewall.
+            </div>
+          </article>
+        </div>
+      </section>
     </section>
   </div>
 
@@ -173,5 +295,6 @@
   <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
 
   <script type="module" src="/src/js/app.js"></script>
+  <script type="module" src="/src/js/hydra.js"></script>
 </body>
 </html>

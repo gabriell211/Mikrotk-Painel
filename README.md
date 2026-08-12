@@ -1,10 +1,12 @@
-# MikroTik Painel
+# HYDRA Network Control
 
-Painel administrativo em **HTML + CSS + JavaScript puro**, com **Vercel Functions** no backend para gerenciar um MikroTik RouterOS sem expor as credenciais do roteador no navegador.
+**HYDRA** é um painel administrativo em **HTML + CSS + JavaScript puro**, com **Vercel Functions** no backend, criado para administrar um MikroTik RouterOS sem expor as credenciais do roteador no navegador.
+
+A identidade visual usa tema escuro, cor principal `#20D49B` e uma camada Aurora UI própria, mantendo foco em infraestrutura, rede e segurança.
 
 ## Objetivo
 
-Centralizar a administração da rede em uma interface web em PT-BR, começando pela amarração `MAC → IP` e evoluindo para controle completo das principais áreas de firewall e rede do RouterOS.
+Centralizar a administração da rede em uma interface web em PT-BR, reduzindo dependência de comandos manuais e começando pela amarração `MAC → IP`, com evolução para firewall, VLANs, SMTP e demais recursos operacionais do RouterOS.
 
 ## Recursos implementados
 
@@ -69,6 +71,29 @@ Centralizar a administração da rede em uma interface web em PT-BR, começando 
 - Address Lists;
 - conexões suportadas pelo backend.
 
+### SMTP / E-mail
+
+A área **SMTP / E-mail** administra o cliente de e-mail nativo do RouterOS e adiciona atalhos de proteção no firewall.
+
+Recursos:
+
+- consultar a configuração não sensível de `/tool e-mail`;
+- configurar servidor/endereço SMTP;
+- configurar porta;
+- configurar TLS / STARTTLS;
+- configurar remetente;
+- configurar usuário;
+- alterar senha sem retornar a senha existente ao navegador;
+- configurar verificação de certificado;
+- configurar VRF;
+- enviar um e-mail de teste pelo próprio MikroTik;
+- criar regra de saída para SMTP seguro em TCP `465/587` para um destino autorizado;
+- criar proteção para TCP `25`, opcionalmente permitindo primeiro um servidor autorizado e bloqueando os demais destinos.
+
+As regras rápidas de firewall SMTP são identificadas com comentários `HYDRA | ...`, evitam duplicação básica e continuam visíveis na área normal de firewall para revisão e reordenação.
+
+> A proteção da porta 25 atua na chain `forward`. Uma regra anterior pode alterar o resultado, portanto a ordem do firewall deve sempre ser revisada.
+
 ### Administração avançada
 
 Os formulários de firewall possuem um campo **Parâmetros avançados (JSON)**. Isso permite enviar propriedades específicas do RouterOS que não possuem um campo visual dedicado, sem limitar regras avançadas como:
@@ -90,14 +115,14 @@ Os formulários de firewall possuem um campo **Parâmetros avançados (JSON)**. 
 
 ## Segurança
 
-O navegador **nunca recebe** usuário e senha do MikroTik.
+O navegador **nunca recebe** usuário e senha administrativos do MikroTik.
 
 Fluxo:
 
 ```text
 Navegador
    ↓
-Painel Vanilla JS
+HYDRA
    ↓
 Vercel Function /api/routeros
    ↓
@@ -123,7 +148,11 @@ Proteções existentes:
 - allowlist de recursos RouterOS;
 - `/rest/execute` bloqueado;
 - execução de scripts bloqueada;
-- `POST` permitido apenas para operações explicitamente necessárias, como `move` do firewall e `make-static` do DHCP;
+- `POST` permitido somente para comandos administrativos explicitamente liberados;
+- SMTP limitado a leitura de `/tool/e-mail` e aos comandos `set` e `send`;
+- leitura SMTP força uma `.proplist` segura e não retorna o campo `password`;
+- teste SMTP aceita somente `to`, `subject` e `body`, sem permitir sobrescrever credenciais ou servidor durante o envio;
+- validação de tamanho e enumerações no backend para parâmetros SMTP;
 - confirmação explícita adicional para mutações de firewall;
 - modo somente leitura opcional;
 - export de segurança opcional antes de mutações de firewall;
@@ -144,9 +173,12 @@ Mikrotk-Painel/
 │   └── session.js
 ├── src/
 │   ├── css/
-│   │   └── app.css
+│   │   ├── app.css
+│   │   └── hydra.css
 │   └── js/
-│       └── app.js
+│       ├── app.js
+│       └── hydra.js
+├── hydra-logo.svg
 ├── .env.example
 ├── .gitignore
 ├── index.html
@@ -309,6 +341,69 @@ Preencha o campo **Limite de banda** do lease estático.
 
 Observação: políticas de FastTrack podem interferir em cenários de controle de banda. Revise seu firewall caso a queue gerada pelo lease não tenha o comportamento esperado.
 
+## Configurar SMTP
+
+No painel:
+
+```text
+Serviços
+→ SMTP / E-mail
+→ Servidor SMTP
+```
+
+Fluxo recomendado:
+
+1. informe o hostname/endereço do servidor SMTP;
+2. configure `587 + STARTTLS` ou a combinação exigida pelo seu provedor;
+3. informe remetente e usuário;
+4. informe a senha somente quando quiser defini-la ou alterá-la;
+5. mantenha verificação de certificado habilitada sempre que possível;
+6. salve;
+7. use **Enviar teste** para validar a comunicação pelo próprio RouterOS.
+
+A senha já configurada no MikroTik não é preenchida novamente no formulário.
+
+## Firewall SMTP
+
+A área SMTP possui dois atalhos:
+
+### Permitir 465/587
+
+Cria uma regra equivalente a:
+
+```text
+chain=forward
+action=accept
+protocol=tcp
+dst-address=<servidor autorizado>
+dst-port=465,587
+```
+
+### Proteger porta 25
+
+Quando um destino autorizado é informado, o HYDRA adiciona primeiro:
+
+```text
+chain=forward
+action=accept
+protocol=tcp
+dst-address=<servidor autorizado>
+dst-port=25
+```
+
+E depois:
+
+```text
+chain=forward
+action=drop
+protocol=tcp
+dst-port=25
+```
+
+Sem destino autorizado, somente a regra de bloqueio é criada.
+
+**Revise a ordem das regras depois da criação.** O RouterOS processa a chain de cima para baixo.
+
 ## Firewall — proteção contra lockout
 
 O RouterOS processa regras na ordem configurada. Por isso o painel:
@@ -333,7 +428,15 @@ DELETE  exclusão
 POST    somente comandos explicitamente permitidos
 ```
 
-O proxy do painel não é um proxy REST irrestrito. Mesmo autenticado no painel, o usuário não consegue enviar uma chamada para `/rest/execute` por meio dele.
+O proxy do HYDRA não é um proxy REST irrestrito. Mesmo autenticado no painel, o usuário não consegue enviar uma chamada para `/rest/execute` por meio dele.
+
+## Validação
+
+```bash
+npm run validate
+```
+
+O comando verifica a sintaxe dos módulos JavaScript e executa os testes de segurança/allowlist do RouterOS, incluindo os caminhos permitidos e bloqueados para SMTP.
 
 ## Próximas evoluções recomendadas
 
@@ -355,4 +458,4 @@ O proxy do painel não é um proxy REST irrestrito. Mesmo autenticado no painel,
 
 ## Aviso operacional
 
-Esse painel possui capacidade de alterar roteamento, leases e firewall. Trate o acesso ao painel como acesso administrativo ao próprio roteador.
+O HYDRA possui capacidade de alterar roteamento, leases, SMTP e firewall. Trate o acesso ao painel como acesso administrativo ao próprio roteador.
